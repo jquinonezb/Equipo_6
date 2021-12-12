@@ -8,7 +8,7 @@
 *.ini
 **/proj_quartus/output_files
 **/proj_quartus/greybox_tmp
-**/src/greynox_tmp
+**/src/greybox_tmp
 *.mti
 *.mpf
 *.qws
