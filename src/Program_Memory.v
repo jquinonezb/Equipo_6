@@ -16,7 +16,7 @@ module Program_Memory
 
 	initial
 	begin
-		$readmemh("C:/PROJECTS/Arquitectura/Datapath/src/Test_Program.dat", rom);
+		$readmemh("Test_Program.dat", rom);
 	end
 
 	always @ (Address_i, Var_i)
