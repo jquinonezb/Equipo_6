@@ -39,7 +39,10 @@ wire [31:0]	PC_o,
 				ALU_o,
 				Reg_ALU_o,
 				PC_source_o,
-				Sign_Extend_o;
+				Sign_Extend_o,
+				Zero_Extend_o,
+				Zero_or_Sign,
+				PC_source_j;
 				
 wire [4:0]	Mux2_o;
 /*wire 	AND_o,
@@ -58,7 +61,9 @@ wire	enable_PC,
 		Selector_RF_WD, 
 		PC_Write,
 		AND_o,
-		Zero;
+		Zero,
+		enable_j,
+		en_zero_sign;
 		
 wire [1:0] Selector_ALU_Src_B;
 wire [2:0] Selector_ALU_Op;
@@ -105,7 +110,7 @@ Register_W_en 	Read_Data_B(.D(Data2_o), .clk(clk), .reset(reset), .Q(Reg_B_o));
 MUX2_1		Source_A(.data_1(Reg_A_o), .data_2(PC_o), .selector(Selector_ALU_Src_A), .data_o(Src_A));
 
 //MUX4_1 TO CHOOSE INPUT DATA B TO ALU
-MUX4_1		Source_B(.data_1(Reg_B_o), .data_2(Sign_Extend_o), .dato_3(Sign_Extend_o << 2), .selector(Selector_ALU_Src_B), .data_o(Src_B));
+MUX4_1		Source_B(.data_1(Reg_B_o), .data_2(Zero_or_Sign), .dato_3(Sign_Extend_o << 2), .selector(Selector_ALU_Src_B), .data_o(Src_B));
 
 //ALU
 ALU		Alu_mod(.data_a(Src_A), .data_b(Src_B), .select(Selector_ALU_Op), .y(ALU_o), .zero(Zero));
@@ -114,10 +119,13 @@ ALU		Alu_mod(.data_a(Src_A), .data_b(Src_B), .select(Selector_ALU_Op), .y(ALU_o)
 Register_W_en 	Read_ALU_Output(.D(ALU_o), .clk(clk), .reset(reset), .Q(Reg_ALU_o));
 
 //MUX TO DECIDE PROGRAMM COUNTER SOURCE
-MUX2_1		PC_Source(.data_1(Reg_ALU_o), .data_2(ALU_o), .selector(Selector_PC_Source), .data_o(PC_source_o));
+MUX2_1		PC_Source(.data_1(Reg_ALU_o), .data_2(ALU_o), .selector(Selector_PC_Source), .data_o(PC_source_j));
 
 //SIGN_EXTEND
 Sign_Extend		SE(.Sign_Ext_i(Ins_Reg_o[15:0]), .Sign_Ext_o(Sign_Extend_o));
+
+//ZERO_EXTEND
+Zero_Extend		ZE(.Zero_Ext_i(Ins_Reg_o[15:0]), .Zero_Ext_o(Zero_Extend_o));
 
 //Control Unit
 ControlUnit2 FSM( 
@@ -136,7 +144,9 @@ ControlUnit2 FSM(
 					.Mem_Reg(Selector_RF_WD),
 					.Reg_Dst(Selector_RF_WR),
 					.ALU_Control(Selector_ALU_Op),
-					.ALU_SrcB(Selector_ALU_Src_B)
+					.ALU_SrcB(Selector_ALU_Src_B),
+					.enable_j(enable_j),
+					.en_zero_sign(en_zero_sign)
 );
 
 and Comp1 (AND_o, Branch, Zero);
@@ -144,5 +154,12 @@ or Comp2 (enable_PC, PC_Write, AND_o);
 
 //Datapath Output to GPIO
 
+//MUX PC ENABLE
+MUX2_1		Jump(.data_1(PC_source_j), .data_2( { {4{1'b0}}, Ins_Reg_o[25:0], {2{1'b0}} } ), .selector(enable_j), .data_o(PC_source_o));
+
+//MUX TO CHOOSE SIGN_EXT OR ZERO_EXT 
+MUX2_1		Zero_Ext(.data_1(Zero_Extend_o), .data_2(Sign_Extend_o), .selector(en_zero_sign), .data_o(Zero_or_Sign));
+
 assign GPIO_o = ALU_o[7:0];
+
 endmodule 

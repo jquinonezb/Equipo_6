@@ -21,6 +21,8 @@ module ControlUnit2
 					Reg_Write,
 					Mem_Reg,
 					Reg_Dst,
+					enable_j,
+					en_zero_sign,
 	output reg [2:0] ALU_Control,
 	output reg [1:0] ALU_SrcB
 				
@@ -43,6 +45,8 @@ module ControlUnit2
 		Reg_Write 	= 1'b0;
 		Mem_Reg 		= 1'b0; 
 		Reg_Dst 		= 1'b0;
+		enable_j		= 1'b1;
+		en_zero_sign = 1'b0;
 		
 		case(y_C)
 			IF: begin
@@ -58,6 +62,9 @@ module ControlUnit2
 				Reg_Write 	= 1'b0;
 				Mem_Reg 		= 1'b0; //
 				Reg_Dst 		= 1'b0;
+				enable_j		= 1'b1;
+				en_zero_sign = 1'b0;
+				
 				Y_N = ID;
 			end
 			
@@ -74,6 +81,9 @@ module ControlUnit2
 				Reg_Write 	= 1'b0;
 				Mem_Reg 		= 1'b1;
 				Reg_Dst 		= 1'b0;
+				enable_j		= 1'b1;
+				en_zero_sign = 1'b0;
+				
 				Y_N = EX;
 			end
 			
@@ -83,31 +93,76 @@ module ControlUnit2
 				IorD 			= 1'b0;
 				IR_Write 	= 1'b0;
 				PC_Src 		= 1'b0;
-				Branch 		= 1'b0;
 				Reg_Write 	= 1'b0;
-				Y_N = WB;
 				
+				Y_N = WB;
 				
 				if(Op == 6'h0 && Funct == 6'h20)
 				begin	// ADD
-				ALU_Control 	= 3'b001;
-				ALU_SrcB 		= 2'b00;
-				ALU_SrcA 		= 1'b1;
-				Mem_Reg 		= 1'b0;
-				Reg_Dst 		= 1'b1;
-				Y_N = WB;
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 		= 2'b00;
+					ALU_SrcA 		= 1'b1;
+					Mem_Reg 		= 1'b0;
+					Reg_Dst 		= 1'b1;
+					enable_j		= 1'b1;
+					en_zero_sign = 1'b0;
+					Branch 		= 1'b0;
+					
+					Y_N = WB;
 				end
-				
 				else if (Op == 6'h08)
 				begin //ADDI
-				ALU_Control 	= 3'b001;
-				ALU_SrcB 		= 2'b10;
-				ALU_SrcA 		= 1'b1;
-				Mem_Reg 		= 1'b0;
-				Reg_Dst 		= 1'b0;
-				Y_N = WB;
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 		= 2'b10;
+					ALU_SrcA 		= 1'b1;
+					Mem_Reg 		= 1'b0;
+					Reg_Dst 		= 1'b0;
+					enable_j		= 1'b1;
+					en_zero_sign = 1'b0;
+					Branch 		= 1'b0;
+					
+					Y_N = WB;
 				end	
-				
+				else if (Op == 6'h0d)
+				begin //ori
+					ALU_Control 	= 3'b011;
+					ALU_SrcB 		= 2'b10;
+					ALU_SrcA 		= 1'b1;
+					Mem_Reg 		= 1'b0;
+					Reg_Dst 		= 1'b0;
+					enable_j		= 1'b1;
+					en_zero_sign = 1'b1;
+					Branch 		= 1'b0;
+					
+					Y_N = WB;
+				end
+				else if (Op == 6'h04)
+				begin //beq
+					ALU_Control 	= 3'b100;
+					ALU_SrcB 		= 2'b11;
+					ALU_SrcA 		= 1'b0;
+					Mem_Reg 		= 1'b0;
+					Reg_Dst 		= 1'b0;
+					enable_j		= 1'b0;
+					en_zero_sign = 1'b0;
+					Branch 		= 1'b1;
+					
+					Y_N = WB;
+				end
+				else if (Op == 6'h02)
+				begin //jump
+					ALU_Control 	= 3'b000;
+					ALU_SrcB 		= 2'b00;
+					ALU_SrcA 		= 1'b0;
+					Mem_Reg 		= 1'b0;
+					Reg_Dst 		= 1'b0;
+					enable_j		= 1'b0;
+					en_zero_sign = 1'b0;
+					Branch 		= 1'b0;
+					PC_Write 	= 1'b1;
+					
+					Y_N = WB;
+				end	
 				/*else
 				begin
 					Y_N = MA;
@@ -138,8 +193,8 @@ module ControlUnit2
 				IR_Write 	= 1'b0;
 				PC_Src 		= 1'b1;
 				Branch 		= 1'b0;
-				Reg_Write 	= 1'b1;
 				Mem_Reg 		= 1'b0;
+				enable_j		= 1'b1;
 				
 				if(Op == 6'h0 && Funct == 6'h20) 
 				begin // add
@@ -147,6 +202,9 @@ module ControlUnit2
 					ALU_SrcB 		= 2'b00;
 					ALU_SrcA 		= 1'b1;
 					Reg_Dst	= 1'b1;
+					en_zero_sign = 1'b0;
+					Reg_Write 	= 1'b1;
+					
 					Y_N = IF;
 				end
 				
@@ -156,6 +214,44 @@ module ControlUnit2
 					ALU_SrcB 		= 2'b10;
 					ALU_SrcA 		= 1'b1;
 					Reg_Dst	= 1'b0;
+					en_zero_sign = 1'b0;
+					Reg_Write 	= 1'b1;
+					
+					Y_N = IF;
+				end
+				else if (Op == 6'h04)
+				begin //beq 
+					ALU_Control 	= 3'b000;
+					ALU_SrcB 		= 2'b00;
+					ALU_SrcA 		= 1'b0;
+					Reg_Dst 		= 1'b0;
+					en_zero_sign = 1'b0;
+					Reg_Write 	= 1'b0;
+					PC_Write 	= 1'b1;
+					
+					Y_N = IF;
+				end
+				else if (Op == 6'h0d)
+				begin //ori 
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 		= 2'b10;
+					ALU_SrcA 		= 1'b1;
+					Reg_Dst 		= 1'b0;
+					en_zero_sign = 1'b1;
+					Reg_Write 	= 1'b1;
+					
+					Y_N = IF;
+				end
+				else if (Op == 6'h02)
+				begin //jump 
+					ALU_Control 	= 3'b000;
+					ALU_SrcB 		= 2'b00;
+					ALU_SrcA 		= 1'b0;
+					Reg_Dst 		= 1'b0;
+					en_zero_sign = 1'b0;
+					Reg_Write 	= 1'b0;
+					enable_j		= 1'b0;
+					
 					Y_N = IF;
 				end
 			

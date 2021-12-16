@@ -24,7 +24,7 @@ case (select)
 3'b111:	y = data_a ~^ data_b;           
 default:		y = 4'b0;
 endcase
-zero = (y == 32'h0) ? 1'b0 : 1'b1;
+zero = (y == 32'h0) ? 1'b1 : 1'b0;
 end
 
 endmodule
