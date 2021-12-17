@@ -1,27 +1,12 @@
 module Data_Path
 (
-	//Inputs
+	// INPUTS
 	input clk,
 	input reset,
-	
-	/********* SEÑALES DE CONTROL *********/
-	/*********                    *********/
-	/*input Selector_Addr, 
-			enable_MemSys, 
-			enable_RegIns, 
-			Branch,
-			enable_RF, 
-			Selector_RF_WR, 
-			Selector_ALU_Src_A, 
-			Selector_PC_Source,
-			Selector_RF_WD, 
-			PC_Write,	
-	input [1:0] Selector_ALU_Src_B,
-	input [2:0] Selector_ALU_Op,*/
-	
-	//Output
-	
-	output [7:0] GPIO_o
+	input [7:0] GPIO_i,
+	// OUTPUTS
+	output [7:0] GPIO_o,
+	output clk_signal
 );
 
 wire [31:0]	PC_o, 
@@ -39,14 +24,15 @@ wire [31:0]	PC_o,
 				ALU_o,
 				Reg_ALU_o,
 				PC_source_o,
-				Sign_Extend_o;
+				PC_ALU,
+				Jump_o,
+				Sign_Extend_o,
+				Zero_Extend_o,
+				Mux_SZ_Ext_o;
 				
 wire [4:0]	Mux2_o;
-/*wire 	AND_o,
-		enable_PC,
-		Zero;*/
 
-wire	enable_PC, 
+wire		enable_PC, 
 		Selector_Addr, 
 		enable_MemSys, 
 		enable_RegIns, 
@@ -58,7 +44,9 @@ wire	enable_PC,
 		Selector_RF_WD, 
 		PC_Write,
 		AND_o,
-		Zero;
+		Selector_Jump,
+		Zero,
+		Selector_Zero;
 		
 wire [1:0] Selector_ALU_Src_B;
 wire [2:0] Selector_ALU_Op;
@@ -105,7 +93,7 @@ Register_W_en 	Read_Data_B(.D(Data2_o), .clk(clk), .reset(reset), .Q(Reg_B_o));
 MUX2_1		Source_A(.data_1(Reg_A_o), .data_2(PC_o), .selector(Selector_ALU_Src_A), .data_o(Src_A));
 
 //MUX4_1 TO CHOOSE INPUT DATA B TO ALU
-MUX4_1		Source_B(.data_1(Reg_B_o), .data_2(Sign_Extend_o), .dato_3(Sign_Extend_o << 2), .selector(Selector_ALU_Src_B), .data_o(Src_B));
+MUX4_1		Source_B(.data_1(Reg_B_o), .data_2(Mux_SZ_Ext_o), .dato_3({ Mux_SZ_Ext_o[29:0], 2'b0}), .selector(Selector_ALU_Src_B), .data_o(Src_B));
 
 //ALU
 ALU		Alu_mod(.data_a(Src_A), .data_b(Src_B), .select(Selector_ALU_Op), .y(ALU_o), .zero(Zero));
@@ -114,10 +102,19 @@ ALU		Alu_mod(.data_a(Src_A), .data_b(Src_B), .select(Selector_ALU_Op), .y(ALU_o)
 Register_W_en 	Read_ALU_Output(.D(ALU_o), .clk(clk), .reset(reset), .Q(Reg_ALU_o));
 
 //MUX TO DECIDE PROGRAMM COUNTER SOURCE
-MUX2_1		PC_Source(.data_1(Reg_ALU_o), .data_2(ALU_o), .selector(Selector_PC_Source), .data_o(PC_source_o));
+MUX2_1		PC_Source(.data_1(Reg_ALU_o), .data_2(ALU_o), .selector(Selector_PC_Source), .data_o(PC_ALU));
+
+//MUX TO DECIDE IF JUMP OR INSTRUCTION TYPE I,R
+MUX2_1		PC_J(.data_1(PC_ALU), .data_2({ PC_o[31:28], Ins_Reg_o[25:0], {2{1'b0}} }), .selector(Selector_Jump), .data_o(PC_source_o));
 
 //SIGN_EXTEND
 Sign_Extend		SE(.Sign_Ext_i(Ins_Reg_o[15:0]), .Sign_Ext_o(Sign_Extend_o));
+
+//ZERO EXTEND
+Zero_extend 		ZE_EXT(.GPIO_i(GPIO_i), .Zero_Ext(Zero_Extend_o));
+
+//MUX TO DECIDE IF GPIO OR SIGN EXTEND
+MUX2_1		GPIO_SIGN(.data_1(Zero_Extend_o), .data_2(Sign_Extend_o), .selector(Selector_Zero), .data_o(Mux_SZ_Ext_o));
 
 //Control Unit
 ControlUnit2 FSM( 
@@ -135,12 +132,15 @@ ControlUnit2 FSM(
 					.Reg_Write(enable_RF),
 					.Mem_Reg(Selector_RF_WD),
 					.Reg_Dst(Selector_RF_WR),
+					.PC_J(Selector_Jump),
 					.ALU_Control(Selector_ALU_Op),
-					.ALU_SrcB(Selector_ALU_Src_B)
+					.ALU_SrcB(Selector_ALU_Src_B),
+					.Zero_Ext(Selector_Zero)
 );
 
 and Comp1 (AND_o, Branch, Zero);
 or Comp2 (enable_PC, PC_Write, AND_o);
+
 
 //Datapath Output to GPIO
 

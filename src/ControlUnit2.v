@@ -2,16 +2,18 @@ module ControlUnit2
 #(
 	parameter WIDTH = 32,
 	parameter 	IF = 3'b000,	// INSTRUCTION FETCH
-					ID = 3'b001,	// INSTRUCTION DECODE
-					EX = 3'b010,	// EXECUTION
-					MA = 3'b011,	// MEMORY ACCESS (opcional)
-					WB = 3'b100 	// WRITE BACK
+			ID = 3'b001,	// INSTRUCTION DECODE
+			EX = 3'b010,	// EXECUTION
+			MA = 3'b011,	// MEMORY ACCESS (opcional)
+			WB = 3'b100, 	// WRITE BACK
+			BEQ = 3'b101,	// STATE TO BEQ
+			JMP = 3'b110 	// STATE TO JUMP
 )
 (
 	input 		clk, rst,
 	input [5:0] Op, Funct,
 	
-	output reg	IorD,
+	output reg			IorD,
 					Mem_Write,
 					IR_Write,
 					PC_Write,
@@ -21,6 +23,8 @@ module ControlUnit2
 					Reg_Write,
 					Mem_Reg,
 					Reg_Dst,
+					PC_J,
+					Zero_Ext,
 	output reg [2:0] ALU_Control,
 	output reg [1:0] ALU_SrcB
 				
@@ -33,85 +37,147 @@ module ControlUnit2
 		Y_N = 3'b000;
 		PC_Write 	= 1'b0;
 		Mem_Write 	= 1'b0;
-		IorD 			= 1'b0;
+		IorD 		= 1'b0;
 		IR_Write 	= 1'b0;
 		PC_Src 		= 1'b0;
 		Branch 		= 1'b0;
 		ALU_Control 	= 3'b000;
-		ALU_SrcB 		= 2'b00;
-		ALU_SrcA 		= 1'b0;
+		ALU_SrcB 	= 2'b00;
+		ALU_SrcA 	= 1'b0;
 		Reg_Write 	= 1'b0;
-		Mem_Reg 		= 1'b0; 
-		Reg_Dst 		= 1'b0;
+		Mem_Reg 	= 1'b0; 
+		Reg_Dst 	= 1'b0;
+		PC_J 		= 1'b0;
+		Zero_Ext 	= 1'b0;
 		
 		case(y_C)
 			IF: begin
 				PC_Write 	= 1'b1;
 				Mem_Write 	= 1'b0;
-				IorD 			= 1'b0;
+				IorD 		= 1'b0;
 				IR_Write 	= 1'b1;
 				PC_Src 		= 1'b0;
 				Branch 		= 1'b0;
-				ALU_Control = 3'b001;
+				ALU_Control 	= 3'b001;
 				ALU_SrcB 	= 2'b01;
 				ALU_SrcA 	= 1'b0;
 				Reg_Write 	= 1'b0;
-				Mem_Reg 		= 1'b0; //
-				Reg_Dst 		= 1'b0;
+				Mem_Reg 	= 1'b0; 
+				Reg_Dst 	= 1'b0;
+				PC_J 		= 1'b1;
+				Zero_Ext 	= 1'b0;
 				Y_N = ID;
 			end
 			
 			ID: begin
 				PC_Write 	= 1'b0;
 				Mem_Write 	= 1'b0;
-				IorD 			= 1'b0;
+				IorD 		= 1'b0;
 				IR_Write 	= 1'b0;
 				PC_Src 		= 1'b0;
 				Branch 		= 1'b0;
-				ALU_Control = 3'b000;
+				ALU_Control 	= 3'b001;
+				ALU_SrcB 	= 2'b11;
+				ALU_SrcA 	= 1'b0;
+				Reg_Write 	= 1'b0;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 1'b0;
+				PC_J 		= 1'b1;
+				Zero_Ext 	= 1'b0;
+				
+				if (Op == 6'h04) 
+				begin // BEQ
+				Y_N = BEQ;
+				end
+				
+				else if(Op == 6'h02)
+				begin // JMP
+				Y_N = JMP;
+				end
+
+				else
+				begin
+				Y_N = EX;
+				end
+			end
+			
+			BEQ: begin
+				PC_Write 	= 1'b0;
+				Mem_Write 	= 1'b0;
+				IorD 		= 1'b0;
+				IR_Write 	= 1'b0;
+				PC_Src 		= 1'b1;
+				Branch 		= 1'b1;
+				ALU_Control 	= 3'b100;
 				ALU_SrcB 	= 2'b00;
 				ALU_SrcA 	= 1'b1;
 				Reg_Write 	= 1'b0;
-				Mem_Reg 		= 1'b1;
-				Reg_Dst 		= 1'b0;
-				Y_N = EX;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 1'b0;
+				PC_J 		= 1'b1;
+				Y_N = IF;
 			end
-			
+
+			JMP: begin
+				PC_Write 	= 1'b1;
+				Mem_Write 	= 1'b0;
+				IorD 		= 1'b0;
+				IR_Write 	= 1'b0;
+				PC_Src 		= 1'b1;
+				Branch 		= 1'b1;
+				ALU_Control 	= 3'b000;
+				ALU_SrcB 	= 2'b11;
+				ALU_SrcA 	= 1'b0;
+				Reg_Write 	= 1'b0;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 1'b0;
+				PC_J 		= 1'b0;
+				Y_N = IF;
+			end
 			EX: begin
 				PC_Write 	= 1'b0;
 				Mem_Write 	= 1'b0;
-				IorD 			= 1'b0;
+				IorD 		= 1'b0;
 				IR_Write 	= 1'b0;
 				PC_Src 		= 1'b0;
 				Branch 		= 1'b0;
 				Reg_Write 	= 1'b0;
+				PC_J 		= 1'b1;
 				Y_N = WB;
 				
 				
 				if(Op == 6'h0 && Funct == 6'h20)
 				begin	// ADD
 				ALU_Control 	= 3'b001;
-				ALU_SrcB 		= 2'b00;
-				ALU_SrcA 		= 1'b1;
-				Mem_Reg 		= 1'b0;
-				Reg_Dst 		= 1'b1;
+				ALU_SrcB 	= 2'b00;
+				ALU_SrcA 	= 1'b1;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 1'b1;
+				Zero_Ext 	= 1'b0;
 				Y_N = WB;
 				end
 				
 				else if (Op == 6'h08)
 				begin //ADDI
 				ALU_Control 	= 3'b001;
-				ALU_SrcB 		= 2'b10;
-				ALU_SrcA 		= 1'b1;
-				Mem_Reg 		= 1'b0;
-				Reg_Dst 		= 1'b0;
+				ALU_SrcB 	= 2'b10;
+				ALU_SrcA 	= 1'b1;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 1'b0;
+				Zero_Ext 	= 1'b0;
 				Y_N = WB;
 				end	
 				
-				/*else
-				begin
-					Y_N = MA;
-				end*/
+				else if (Op == 6'h0d)
+				begin //ORI
+				ALU_Control 	= 3'b011;
+				ALU_SrcB 	= 2'b10;
+				ALU_SrcA 	= 1'b1;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 1'b0;
+				Zero_Ext 	= 1'b1;
+				Y_N = WB;
+				end
 				
 			end
 			
@@ -134,28 +200,42 @@ module ControlUnit2
 			WB: begin
 				PC_Write 	= 1'b0;
 				Mem_Write 	= 1'b0;
-				IorD 			= 1'b0;
+				IorD 		= 1'b0;
 				IR_Write 	= 1'b0;
-				PC_Src 		= 1'b1;
+				PC_Src 		= 1'b0;
 				Branch 		= 1'b0;
 				Reg_Write 	= 1'b1;
-				Mem_Reg 		= 1'b0;
+				Mem_Reg 	= 1'b0;
+				PC_J 		= 1'b1;
+				
 				
 				if(Op == 6'h0 && Funct == 6'h20) 
 				begin // add
 					ALU_Control 	= 3'b001;
-					ALU_SrcB 		= 2'b00;
-					ALU_SrcA 		= 1'b1;
-					Reg_Dst	= 1'b1;
+					ALU_SrcB 	= 2'b00;
+					ALU_SrcA 	= 1'b1;
+					Reg_Dst		= 1'b1;
+					Zero_Ext 	= 1'b0;
 					Y_N = IF;
 				end
 				
 				else if(Op == 6'h8) 
 				begin // addi
 					ALU_Control 	= 3'b001;
-					ALU_SrcB 		= 2'b10;
-					ALU_SrcA 		= 1'b1;
-					Reg_Dst	= 1'b0;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Reg_Dst		= 1'b0;
+					Zero_Ext 	= 1'b0;
+					Y_N = IF;
+				end
+				
+				else if (Op == 6'h0d)
+				begin //ORI
+					ALU_Control 	= 3'b011;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Reg_Dst 	= 1'b0;
+					Zero_Ext 	= 1'b1;
 					Y_N = IF;
 				end
 			
@@ -163,7 +243,7 @@ module ControlUnit2
 			
 			default: Y_N = 3'b000;
 		endcase
-	end // state_table
+	end 
 	
 	always@(posedge clk or negedge rst)
 	begin: state_FFs

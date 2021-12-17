@@ -2,37 +2,18 @@ module TB_Datapath;
 
 reg 	clk_tb = 0;
 reg 	reset_tb;
-/*reg 	enable_PC_tb, 
-	Selector_Addr_tb, 
-	enable_MemSys_tb, 
-	enable_RegIns_tb,
-	enable_RF_tb, 
-	Selector_RF_WR_tb, 
-	Selector_ALU_Src_A_tb, 
-	Selector_PC_Source_tb,
-	Selector_RF_WD_tb;
-reg [1:0] Selector_ALU_Src_B_tb;
-reg [2:0] Selector_ALU_Op_tb;*/
+reg  [7:0] GPIO_i_tb;
 wire [7:0] GPIO_o_tb;
+wire 	clk_signal_tb;
 
 Data_Path DUT
 (
 //INPUTS
 	.clk(clk_tb),
  	.reset(reset_tb),
- 	/*.enable_PC(enable_PC_tb), 
-	.Selector_Addr(Selector_Addr_tb), 
-	.enable_MemSys(enable_MemSys_tb), 
-	.enable_RegIns(enable_RegIns_tb),
-	.enable_RF(enable_RF_tb), 
-	.Selector_RF_WR(Selector_RF_WR_tb), 
-	.Selector_ALU_Src_A(Selector_ALU_Src_A_tb), 
-	.Selector_PC_Source(Selector_PC_Source_tb),
-	.Selector_RF_WD(Selector_RF_WD_tb),
-	.Selector_ALU_Src_B(Selector_ALU_Src_B_tb),
-	.Selector_ALU_Op(Selector_ALU_Op_tb),*/
+ 	.GPIO_i(GPIO_i_tb),
 //OUTPUTS 
-	
+	.clk_signal(clk_signal_tb),
 	.GPIO_o(GPIO_o_tb)
 );
 
@@ -47,6 +28,7 @@ initial begin
 	#1 reset_tb = 1'b1;
 	#3 reset_tb = 1'b0;
 	#3 reset_tb = 1'b1;
+	GPIO_i_tb = 8'h3;
 end
 
 /***** IorD MUX and PC 400000*****/
