@@ -2,6 +2,9 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate -radix binary /TB_Datapath/clk_tb
 add wave -noupdate -radix binary /TB_Datapath/reset_tb
+add wave -noupdate -expand -group GPIO_i /TB_Datapath/DUT/ZE_EXT/GPIO_i
+add wave -noupdate -expand -group GPIO_i -radix hexadecimal /TB_Datapath/DUT/ZE_EXT/Zero_Ext
+add wave -noupdate -expand -group GPIO_o -color {Green Yellow} -radix hexadecimal -childformat {{{/TB_Datapath/GPIO_o_tb[7]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[6]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[5]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[4]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[3]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[2]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[1]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[0]} -radix hexadecimal}} -subitemconfig {{/TB_Datapath/GPIO_o_tb[7]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[6]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[5]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[4]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[3]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[2]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[1]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[0]} {-color {Green Yellow} -height 15 -radix hexadecimal}} /TB_Datapath/GPIO_o_tb
 add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FSM/Op
 add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FSM/Funct
 add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FSM/IorD
@@ -18,7 +21,6 @@ add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FS
 add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FSM/ALU_SrcB
 add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FSM/y_C
 add wave -noupdate -expand -group Control_Unit -color Yellow /TB_Datapath/DUT/FSM/Y_N
-add wave -noupdate -expand -group GPIO -color {Green Yellow} -radix hexadecimal -childformat {{{/TB_Datapath/GPIO_o_tb[7]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[6]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[5]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[4]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[3]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[2]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[1]} -radix hexadecimal} {{/TB_Datapath/GPIO_o_tb[0]} -radix hexadecimal}} -subitemconfig {{/TB_Datapath/GPIO_o_tb[7]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[6]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[5]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[4]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[3]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[2]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[1]} {-color {Green Yellow} -height 15 -radix hexadecimal} {/TB_Datapath/GPIO_o_tb[0]} {-color {Green Yellow} -height 15 -radix hexadecimal}} /TB_Datapath/GPIO_o_tb
 add wave -noupdate -expand -group {Program Counter} -color Coral /TB_Datapath/DUT/PC/enable
 add wave -noupdate -expand -group {Program Counter} -color Coral -radix hexadecimal /TB_Datapath/DUT/PC/Q
 add wave -noupdate -expand -group {Instruction Register} -color {Sky Blue} /TB_Datapath/DUT/Inst_Reg/enable
@@ -39,9 +41,12 @@ add wave -noupdate -expand -group Src_B -color {Medium Violet Red} -radix hexade
 add wave -noupdate -expand -group ALU -radix hexadecimal /TB_Datapath/DUT/Alu_mod/select
 add wave -noupdate -expand -group ALU -radix hexadecimal /TB_Datapath/DUT/Alu_mod/y
 add wave -noupdate -expand -group ALU /TB_Datapath/DUT/Alu_mod/zero
-add wave -noupdate -expand -group Sign_Extended -color White -radix hexadecimal /TB_Datapath/DUT/SE/Sign_Ext_o
+add wave -noupdate -expand -group MUX_SZ_Ext /TB_Datapath/DUT/GPIO_SIGN/selector
+add wave -noupdate -expand -group MUX_SZ_Ext -radix hexadecimal /TB_Datapath/DUT/GPIO_SIGN/data_1
+add wave -noupdate -expand -group MUX_SZ_Ext -radix hexadecimal /TB_Datapath/DUT/GPIO_SIGN/data_2
+add wave -noupdate -expand -group MUX_SZ_Ext -radix hexadecimal /TB_Datapath/DUT/GPIO_SIGN/data_o
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {8 ps} 0}
+WaveRestoreCursors {{Cursor 1} {18 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 185
 configure wave -valuecolwidth 110
