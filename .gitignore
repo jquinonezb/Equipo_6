@@ -16,3 +16,4 @@
 *.qip
 transcript
 !*.sof
+**/proj_modelsim/wlft*
