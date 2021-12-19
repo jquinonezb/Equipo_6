@@ -7,7 +7,8 @@ module ControlUnit2
 			MA = 3'b011,	// MEMORY ACCESS (opcional)
 			WB = 3'b100, 	// WRITE BACK
 			BEQ = 3'b101,	// STATE TO BEQ
-			JMP = 3'b110 	// STATE TO JUMP
+			JMP = 3'b110, 	// STATE TO JUMP
+			JAL = 3'b111	// STATE TO JAL
 )
 (
 	input 		clk, rst,
@@ -17,16 +18,16 @@ module ControlUnit2
 					Mem_Write,
 					IR_Write,
 					PC_Write,
+					Reg_Write,
 					PC_Src,
 					Branch,
 					ALU_SrcA,
-					Reg_Write,
 					Mem_Reg,
-					Reg_Dst,
 					PC_J,
 					Zero_Ext,
-	output reg [2:0] ALU_Control,
-	output reg [1:0] ALU_SrcB
+	output reg [2:0] 	ALU_Control,
+	output reg [1:0] 	ALU_SrcB,
+				Reg_Dst
 				
 );
 
@@ -46,7 +47,7 @@ module ControlUnit2
 		ALU_SrcA 	= 1'b0;
 		Reg_Write 	= 1'b0;
 		Mem_Reg 	= 1'b0; 
-		Reg_Dst 	= 1'b0;
+		Reg_Dst 	= 2'b00;
 		PC_J 		= 1'b0;
 		Zero_Ext 	= 1'b0;
 		
@@ -63,7 +64,7 @@ module ControlUnit2
 				ALU_SrcA 	= 1'b0;
 				Reg_Write 	= 1'b0;
 				Mem_Reg 	= 1'b0; 
-				Reg_Dst 	= 1'b0;
+				Reg_Dst 	= 2'b00;
 				PC_J 		= 1'b1;
 				Zero_Ext 	= 1'b0;
 				Y_N = ID;
@@ -81,7 +82,7 @@ module ControlUnit2
 				ALU_SrcA 	= 1'b0;
 				Reg_Write 	= 1'b0;
 				Mem_Reg 	= 1'b0;
-				Reg_Dst 	= 1'b0;
+				Reg_Dst 	= 2'b00;
 				PC_J 		= 1'b1;
 				Zero_Ext 	= 1'b0;
 				
@@ -90,11 +91,11 @@ module ControlUnit2
 				Y_N = BEQ;
 				end
 				
-				else if(Op == 6'h02)
+				else if(Op == 6'h02 | Op == 6'h03)
 				begin // JMP
 				Y_N = JMP;
 				end
-
+				
 				else
 				begin
 				Y_N = EX;
@@ -113,7 +114,7 @@ module ControlUnit2
 				ALU_SrcA 	= 1'b1;
 				Reg_Write 	= 1'b0;
 				Mem_Reg 	= 1'b0;
-				Reg_Dst 	= 1'b0;
+				Reg_Dst 	= 2'b00;
 				PC_J 		= 1'b1;
 				Y_N = IF;
 			end
@@ -124,15 +125,40 @@ module ControlUnit2
 				IorD 		= 1'b0;
 				IR_Write 	= 1'b0;
 				PC_Src 		= 1'b1;
-				Branch 		= 1'b1;
+				Branch 		= 1'b0;
 				ALU_Control 	= 3'b000;
 				ALU_SrcB 	= 2'b11;
 				ALU_SrcA 	= 1'b0;
 				Reg_Write 	= 1'b0;
 				Mem_Reg 	= 1'b0;
-				Reg_Dst 	= 1'b0;
+				Reg_Dst 	= 2'b00;
 				PC_J 		= 1'b0;
+				
+				if (Op == 6'h03)
+				begin
+				Y_N = JAL;
+				end
+
+				else
+				begin
 				Y_N = IF;
+				end
+			end
+
+			JAL: begin
+				PC_Write 	= 1'b0;
+				Mem_Write 	= 1'b0;
+				IorD 		= 1'b0;
+				IR_Write 	= 1'b0;
+				PC_Src 		= 1'b0;
+				Branch 		= 1'b0;
+				ALU_Control 	= 3'b010;
+				ALU_SrcB 	= 2'b11;
+				ALU_SrcA 	= 1'b0;
+				Reg_Write 	= 1'b1;
+				Mem_Reg 	= 1'b0;
+				Reg_Dst 	= 2'b10;
+				PC_J 		= 1'b0;
 			end
 			EX: begin
 				PC_Write 	= 1'b0;
@@ -225,7 +251,7 @@ module ControlUnit2
 					ALU_Control 	= 3'b001;
 					ALU_SrcB 	= 2'b00;
 					ALU_SrcA 	= 1'b1;
-					Reg_Dst		= 1'b1;
+					Reg_Dst		= 2'b01;
 					Zero_Ext 	= 1'b0;
 					Y_N = IF;
 				end
@@ -235,7 +261,7 @@ module ControlUnit2
 					ALU_Control 	= 3'b001;
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
-					Reg_Dst		= 1'b0;
+					Reg_Dst		= 2'b00;
 					Zero_Ext 	= 1'b0;
 					Y_N = IF;
 				end
@@ -245,7 +271,7 @@ module ControlUnit2
 					ALU_Control 	= 3'b011;
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
-					Reg_Dst 	= 1'b0;
+					Reg_Dst 	= 2'b00;
 					Zero_Ext 	= 1'b1;
 					Y_N = IF;
 				end
