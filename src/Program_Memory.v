@@ -10,13 +10,13 @@ module Program_Memory
 );
 
 	// Declare the ROM variable
-	reg [DATA_WIDTH-1:0] rom [14:0];
+	reg [DATA_WIDTH-1:0] rom [MEMORY_DEPTH-1:0];
 	reg [(DATA_WIDTH-1):0] Var_i = 32'h400000;
 	
 
 	initial
 	begin
-		$readmemh("C:/PROJECTS/Arquitectura/Datapath/MARS/T7.dat", rom);
+		$readmemh("D:/OneDrive/Documentos/- ITESO/Arquitectura de Computadoras/GIT_PROJECTS/Equipo_6/assembly_code/Factorial_HEX.dat", rom);
 	end
 
 	always @ (Address_i, Var_i)

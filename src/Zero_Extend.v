@@ -5,7 +5,7 @@ module Zero_extend
 )
 (
 	input 		[WIDTH_i-1:0] GPIO_i,
-	output reg 	[WIDTH_o-1:0] Zero_Ext
+	output wire 	[WIDTH_o-1:0] Zero_Ext
 );
 
 assign	Zero_Ext = { {24{1'b0}}, GPIO_i};

@@ -148,35 +148,46 @@ module ControlUnit2
 				
 				if(Op == 6'h0 && Funct == 6'h20)
 				begin	// ADD
-				ALU_Control 	= 3'b001;
-				ALU_SrcB 	= 2'b00;
-				ALU_SrcA 	= 1'b1;
-				Mem_Reg 	= 1'b0;
-				Reg_Dst 	= 1'b1;
-				Zero_Ext 	= 1'b0;
-				Y_N = WB;
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 	= 2'b00;
+					ALU_SrcA 	= 1'b1;
+					Mem_Reg 	= 1'b0;
+					Reg_Dst 	= 1'b1;
+					Zero_Ext 	= 1'b0;
+					Y_N = WB;
 				end
 				
-				else if (Op == 6'h08)
-				begin //ADDI
-				ALU_Control 	= 3'b001;
-				ALU_SrcB 	= 2'b10;
-				ALU_SrcA 	= 1'b1;
-				Mem_Reg 	= 1'b0;
-				Reg_Dst 	= 1'b0;
-				Zero_Ext 	= 1'b0;
-				Y_N = WB;
+				else if (Op == 6'h08 || Op == 6'h09)
+				begin //ADDI & ADDIU
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Mem_Reg 	= 1'b0;
+					Reg_Dst 	= 1'b0;
+					Zero_Ext 	= 1'b0;
+					Y_N = WB;
 				end	
 				
 				else if (Op == 6'h0d)
 				begin //ORI
-				ALU_Control 	= 3'b011;
-				ALU_SrcB 	= 2'b10;
-				ALU_SrcA 	= 1'b1;
-				Mem_Reg 	= 1'b0;
-				Reg_Dst 	= 1'b0;
-				Zero_Ext 	= 1'b1;
-				Y_N = WB;
+					ALU_Control 	= 3'b011;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Mem_Reg 	= 1'b0;
+					Reg_Dst 	= 1'b0;
+					Zero_Ext 	= 1'b1;
+					Y_N = WB;
+				end
+				
+				else if (Op == 6'h0c)
+				begin //ANDI
+					ALU_Control 	= 3'b010;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Mem_Reg 	= 1'b0;
+					Reg_Dst 	= 1'b0;
+					Zero_Ext 	= 1'b1;
+					Y_N = WB;
 				end
 				
 			end
@@ -219,8 +230,8 @@ module ControlUnit2
 					Y_N = IF;
 				end
 				
-				else if(Op == 6'h8) 
-				begin // addi
+				else if(Op == 6'h8 || Op == 6'h09) 
+				begin // addi & addiu
 					ALU_Control 	= 3'b001;
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
@@ -232,6 +243,16 @@ module ControlUnit2
 				else if (Op == 6'h0d)
 				begin //ORI
 					ALU_Control 	= 3'b011;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Reg_Dst 	= 1'b0;
+					Zero_Ext 	= 1'b1;
+					Y_N = IF;
+				end
+				
+				else if (Op == 6'h0c)
+				begin //ANDI
+					ALU_Control 	= 3'b010;
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
 					Reg_Dst 	= 1'b0;
