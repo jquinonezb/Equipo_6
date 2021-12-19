@@ -37,8 +37,7 @@ wire		enable_PC,
 		enable_MemSys, 
 		enable_RegIns, 
 		Branch,
-		enable_RF, 
-		Selector_RF_WR, 
+		enable_RF,  
 		Selector_ALU_Src_A, 
 		Selector_PC_Source,
 		Selector_RF_WD, 
@@ -48,8 +47,10 @@ wire		enable_PC,
 		Zero,
 		Selector_Zero;
 		
-wire [1:0] Selector_ALU_Src_B;
-wire [2:0] Selector_ALU_Op;
+wire [1:0] 	Selector_ALU_Src_B,
+				Selector_RF_WR;
+				
+wire [2:0] 	Selector_ALU_Op;
 
 // PROGRAM COUNTER
 Program_counter 	PC(.D(PC_source_o), .clk(clk), .reset(reset), .enable(enable_PC), .Q(PC_o));
@@ -80,7 +81,7 @@ Register_File	RF(
 );
 
 //MUX WRITE_REGISTER -> REG_FILE
-MUX2_1	#(.WIDTH(5))	MUX_IR(.data_1(Ins_Reg_o[15:11]), .data_2(Ins_Reg_o[20:16]), .selector(Selector_RF_WR), .data_o(Mux2_o));
+MUX4_1	#(.WIDTH(5))	MUX_IR(.data_1(Ins_Reg_o[15:11]), .data_2(Ins_Reg_o[20:16]), .data_3(5'b11111), .data_4(5'b00000), .selector(Selector_RF_WR), .data_o(Mux2_o));
 
 //MUX WRITE_DATA -> REG_FILE
 MUX2_1		MUX_DATA(.data_1(Data_Reg_o), .data_2(Reg_ALU_o), .selector(Selector_RF_WD), .data_o(Mux_RF_WD));
@@ -93,7 +94,7 @@ Register_W_en 	Read_Data_B(.D(Data2_o), .clk(clk), .reset(reset), .Q(Reg_B_o));
 MUX2_1		Source_A(.data_1(Reg_A_o), .data_2(PC_o), .selector(Selector_ALU_Src_A), .data_o(Src_A));
 
 //MUX4_1 TO CHOOSE INPUT DATA B TO ALU
-MUX4_1		Source_B(.data_1(Reg_B_o), .data_2(Mux_SZ_Ext_o), .dato_3({ Mux_SZ_Ext_o[29:0], 2'b0}), .selector(Selector_ALU_Src_B), .data_o(Src_B));
+MUX4_1	#(.WIDTH(32)) Source_B(.data_1(Reg_B_o), .data_2(32'b0000_0000_0000_0000_0000_0000_0000_0100), .data_3(Mux_SZ_Ext_o), .data_4({ Mux_SZ_Ext_o[29:0], 2'b0}), .selector(Selector_ALU_Src_B), .data_o(Src_B));
 
 //ALU
 ALU		Alu_mod(.data_a(Src_A), .data_b(Src_B), .select(Selector_ALU_Op), .y(ALU_o), .zero(Zero));
