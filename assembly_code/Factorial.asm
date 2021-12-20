@@ -3,7 +3,8 @@
 
 .text
 Main:
-	li $a0,8 # Loading constant
+	li $sp, 0x10010100
+	li $a0,2 # Loading constant
 	jal Factorial # Calling procedure
 	j Exit	# Jump to Main label
 	

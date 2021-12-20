@@ -44,11 +44,11 @@ wire		enable_PC,
 		PC_Write,
 		AND_o,
 		Selector_Jump,
-		Zero,
-		Selector_Zero;
+		Zero;
 		
 wire [1:0] 	Selector_ALU_Src_B,
-				Selector_RF_WR;
+				Selector_RF_WR,
+				Selector_Zero;
 				
 wire [2:0] 	Selector_ALU_Op;
 
@@ -81,7 +81,7 @@ Register_File	RF(
 );
 
 //MUX WRITE_REGISTER -> REG_FILE
-MUX4_1	#(.WIDTH(5))	MUX_IR(.data_1(Ins_Reg_o[15:11]), .data_2(Ins_Reg_o[20:16]), .data_3(5'b11111), .data_4(5'b00000), .selector(Selector_RF_WR), .data_o(Mux2_o));
+MUX4_1	#(.WIDTH(5))	MUX_IR(.data_1(Ins_Reg_o[20:16]), .data_2(Ins_Reg_o[15:11]), .data_3(5'b11111), .data_4(5'b00000), .selector(Selector_RF_WR), .data_o(Mux2_o));
 
 //MUX WRITE_DATA -> REG_FILE
 MUX2_1		MUX_DATA(.data_1(Data_Reg_o), .data_2(Reg_ALU_o), .selector(Selector_RF_WD), .data_o(Mux_RF_WD));
@@ -112,10 +112,10 @@ MUX2_1		PC_J(.data_1(PC_ALU), .data_2({ PC_o[31:28], Ins_Reg_o[25:0], {2{1'b0}} 
 Sign_Extend		SE(.Sign_Ext_i(Ins_Reg_o[15:0]), .Sign_Ext_o(Sign_Extend_o));
 
 //ZERO EXTEND
-Zero_extend 		ZE_EXT(.GPIO_i(GPIO_i), .Zero_Ext(Zero_Extend_o));
+Zero_extend 		ZE_EXT(.GPIO_i(Ins_Reg_o[15:0]), .Zero_Ext(Zero_Extend_o)); // GPIO_i
 
-//MUX TO DECIDE IF GPIO OR SIGN EXTEND
-MUX2_1		GPIO_SIGN(.data_1(Zero_Extend_o), .data_2(Sign_Extend_o), .selector(Selector_Zero), .data_o(Mux_SZ_Ext_o));
+//MUX TO DECIDE IF GPIO OR SIGN EXTEND 
+MUX4_1		GPIO_SIGN(.data_1(Sign_Extend_o), .data_2(Zero_Extend_o), .data_3( { Ins_Reg_o[15:0], {16{1'b0}} }), .data_4({32{1'b0}}), .selector(Selector_Zero), .data_o(Mux_SZ_Ext_o));
 
 //Control Unit
 ControlUnit2 FSM( 

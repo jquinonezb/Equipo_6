@@ -16,7 +16,7 @@ module Program_Memory
 
 	initial
 	begin
-		$readmemh("D:/OneDrive/Documentos/- ITESO/Arquitectura de Computadoras/GIT_PROJECTS/Equipo_6/assembly_code/Factorial_HEX.dat", rom);
+		$readmemh("D:/OneDrive/Documentos/- ITESO/Arquitectura de Computadoras/GIT_PROJECTS/Equipo_6/assembly_code/Factorial_HEX2.dat", rom);
 	end
 
 	always @ (Address_i, Var_i)

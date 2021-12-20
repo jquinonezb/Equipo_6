@@ -1,14 +1,14 @@
 module ControlUnit2
 #(
 	parameter WIDTH = 32,
-	parameter 	IF = 3'b000,	// INSTRUCTION FETCH
-			ID = 3'b001,	// INSTRUCTION DECODE
-			EX = 3'b010,	// EXECUTION
-			MA = 3'b011,	// MEMORY ACCESS (opcional)
-			WB = 3'b100, 	// WRITE BACK
-			BEQ = 3'b101,	// STATE TO BEQ
-			JMP = 3'b110, 	// STATE TO JUMP
-			JAL = 3'b111	// STATE TO JAL
+	parameter 	IF = 4'b0000,	// INSTRUCTION FETCH
+			ID = 4'b0001,	// INSTRUCTION DECODE
+			EX = 4'b0010,	// EXECUTION
+			MA = 4'b0011,	// MEMORY ACCESS (opcional)
+			WB = 4'b0100, 	// WRITE BACK
+			BEQ = 4'b0101,	// STATE TO BEQ
+			JMP = 4'b0110, 	// STATE TO JUMP
+			JAL = 4'b0111	// STATE TO JAL
 )
 (
 	input 		clk, rst,
@@ -24,10 +24,9 @@ module ControlUnit2
 					ALU_SrcA,
 					Mem_Reg,
 					PC_J,
-					Zero_Ext,
 	output reg [2:0] 	ALU_Control,
 	output reg [1:0] 	ALU_SrcB,
-				Reg_Dst
+				Reg_Dst, Zero_Ext
 				
 );
 
@@ -35,7 +34,7 @@ module ControlUnit2
 					
 	always @(y_C or Op or Funct)
 	begin: state_table
-		Y_N = 3'b000;
+		Y_N = 4'b0000;
 		PC_Write 	= 1'b0;
 		Mem_Write 	= 1'b0;
 		IorD 		= 1'b0;
@@ -49,7 +48,7 @@ module ControlUnit2
 		Mem_Reg 	= 1'b0; 
 		Reg_Dst 	= 2'b00;
 		PC_J 		= 1'b0;
-		Zero_Ext 	= 1'b0;
+		Zero_Ext 	= 2'b00;
 		
 		case(y_C)
 			IF: begin
@@ -66,7 +65,7 @@ module ControlUnit2
 				Mem_Reg 	= 1'b0; 
 				Reg_Dst 	= 2'b00;
 				PC_J 		= 1'b1;
-				Zero_Ext 	= 1'b0;
+				Zero_Ext 	= 2'b00;
 				Y_N = ID;
 			end
 			
@@ -84,7 +83,7 @@ module ControlUnit2
 				Mem_Reg 	= 1'b0;
 				Reg_Dst 	= 2'b00;
 				PC_J 		= 1'b1;
-				Zero_Ext 	= 1'b0;
+				Zero_Ext 	= 2'b00;
 				
 				if (Op == 6'h04) 
 				begin // BEQ
@@ -152,13 +151,16 @@ module ControlUnit2
 				IR_Write 	= 1'b0;
 				PC_Src 		= 1'b0;
 				Branch 		= 1'b0;
-				ALU_Control 	= 3'b010;
+				ALU_Control 	= 3'b111;
 				ALU_SrcB 	= 2'b11;
 				ALU_SrcA 	= 1'b0;
-				Reg_Write 	= 1'b1;
+				Reg_Write 	= 1'b0; //1
 				Mem_Reg 	= 1'b0;
 				Reg_Dst 	= 2'b10;
 				PC_J 		= 1'b0;
+				Zero_Ext 	= 2'b00;
+				
+				Y_N = WB;
 			end
 			EX: begin
 				PC_Write 	= 1'b0;
@@ -178,8 +180,8 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b00;
 					ALU_SrcA 	= 1'b1;
 					Mem_Reg 	= 1'b0;
-					Reg_Dst 	= 1'b1;
-					Zero_Ext 	= 1'b0;
+					Reg_Dst 	= 2'b01;
+					Zero_Ext 	= 2'b00;
 					Y_N = WB;
 				end
 				
@@ -189,8 +191,8 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
 					Mem_Reg 	= 1'b0;
-					Reg_Dst 	= 1'b0;
-					Zero_Ext 	= 1'b0;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b00;
 					Y_N = WB;
 				end	
 				
@@ -200,8 +202,19 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
 					Mem_Reg 	= 1'b0;
-					Reg_Dst 	= 1'b0;
-					Zero_Ext 	= 1'b1;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b01;
+					Y_N = WB;
+				end
+				
+				else if (Op == 6'h0f)
+				begin //LUI
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Mem_Reg 	= 1'b0;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b10;
 					Y_N = WB;
 				end
 				
@@ -211,8 +224,19 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
 					Mem_Reg 	= 1'b0;
-					Reg_Dst 	= 1'b0;
-					Zero_Ext 	= 1'b1;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b01;
+					Y_N = WB;
+				end
+				
+				if (Op == 6'h0 && Funct == 6'h08) 
+				begin // JR
+					ALU_Control 	= 3'b011;
+					ALU_SrcB 	= 2'b00;
+					ALU_SrcA 	= 1'b1;
+					Mem_Reg 	= 1'b0;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b01;
 					Y_N = WB;
 				end
 				
@@ -252,7 +276,7 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b00;
 					ALU_SrcA 	= 1'b1;
 					Reg_Dst		= 2'b01;
-					Zero_Ext 	= 1'b0;
+					Zero_Ext 	= 2'b00;
 					Y_N = IF;
 				end
 				
@@ -262,7 +286,7 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
 					Reg_Dst		= 2'b00;
-					Zero_Ext 	= 1'b0;
+					Zero_Ext 	= 2'b00;
 					Y_N = IF;
 				end
 				
@@ -272,7 +296,17 @@ module ControlUnit2
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
 					Reg_Dst 	= 2'b00;
-					Zero_Ext 	= 1'b1;
+					Zero_Ext 	= 2'b01;
+					Y_N = IF;
+				end
+				
+				else if (Op == 6'h0f)
+				begin //LUI
+					ALU_Control 	= 3'b001;
+					ALU_SrcB 	= 2'b10;
+					ALU_SrcA 	= 1'b1;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b10;
 					Y_N = IF;
 				end
 				
@@ -281,14 +315,34 @@ module ControlUnit2
 					ALU_Control 	= 3'b010;
 					ALU_SrcB 	= 2'b10;
 					ALU_SrcA 	= 1'b1;
-					Reg_Dst 	= 1'b0;
-					Zero_Ext 	= 1'b1;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b01;
+					Y_N = IF;
+				end
+				
+				if (Op == 6'h0 && Funct == 6'h08) 
+				begin // JR
+					ALU_Control 	= 3'b010;
+					ALU_SrcB 	= 2'b00;
+					ALU_SrcA 	= 1'b1;
+					Reg_Dst 	= 2'b00;
+					Zero_Ext 	= 2'b01;
 					Y_N = IF;
 				end
 			
+				if (Op == 6'h03)
+				begin // JAL
+					ALU_Control 	= 3'b111;
+					ALU_SrcB 	= 2'b11;
+					ALU_SrcA 	= 1'b0;
+					Reg_Dst 	= 2'b10;
+					Zero_Ext 	= 2'b00;
+					Y_N = IF;
+				end
+				
 			end
 			
-			default: Y_N = 3'b000;
+			default: Y_N = 4'b0000;
 		endcase
 	end 
 	
